@@ -4,6 +4,7 @@ import { router } from "@inertiajs/vue3";
 import NProgress from "nprogress";
 import "bootstrap/dist/css/bootstrap.css";
 import "./bootstrap";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Assets/css/main.css";
 import Vue3EasyDataTable from "vue3-easy-data-table";
 import "vue3-easy-data-table/dist/style.css";  

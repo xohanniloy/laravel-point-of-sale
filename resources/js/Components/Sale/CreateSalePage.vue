@@ -1,6 +1,7 @@
 <script setup>
 import { usePage, router, useForm } from '@inertiajs/vue3'
 import { createToaster } from "@meforma/vue-toaster";
+import { remove } from 'nprogress';
 import { ref } from "vue";
 
 const toaster = createToaster({
@@ -36,6 +37,7 @@ const vatAmount = ref(0);
 const discountAmount = ref(0);
 const usePercentageDiscount = ref(false);
 
+
 const selectedProduct = ref([]);
 
 const addProductToSale = (id, image, name, price, unit) => {
@@ -62,8 +64,7 @@ const addProductToSale = (id, image, name, price, unit) => {
                 name: name,
                 price: price,
                 unit: 1,
-                existQTY: unit - 1,
-                productPrice: price,
+                existQTY: unit - 1
             }
             selectedProduct.value.push(newProduct);
             calculateTotal();
@@ -72,6 +73,40 @@ const addProductToSale = (id, image, name, price, unit) => {
         }
     }
 }
+const removeQTY = (id) => {
+    console.log(id);
+}
+const addQTY = (id) => {
+    console.log(id);
+}
+const removeProductFromSale = (index) => {
+    console.log(index);
+}
+const calculateTotal = () => {
+    console.log('calculateTotal');
+
+}
+const applyVat = () => {
+    console.log('applyVat');
+}
+const removeVat = () => {
+    console.log('removeVat');
+}
+
+
+const now = new Date();
+const formattedDate = now.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+});
+const formattedTime = now.toLocaleTimeString('en-US', {
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+});
+
 </script>
 
 <template>
@@ -87,13 +122,14 @@ const addProductToSale = (id, image, name, price, unit) => {
                             <div class="row">
                                 <div class="col-8">
                                     <span class="text-bold text-dark">BILLED TO</span>
-                                    <p class="text-xs mx-0 my-1">Name: <span>selectedCustomer-name</span></p>
-                                    <p class="text-xs mx-0 my-1">Email: <span>selectedCustomer-email</span></p>
-                                    <p class="text-xs mx-0 my-1">User ID: <span>selectedCustomer-id</span></p>
+                                    <p class="text-xs mx-0 my-1">Name: <span>{{ selectedCustomer?.name }}</span></p>
+                                    <p class="text-xs mx-0 my-1">Email: <span>{{ selectedCustomer?.email }}</span></p>
+                                    <p class="text-xs mx-0 my-1">User ID: <span>{{ selectedCustomer?.id }}</span></p>
                                 </div>
                                 <div class="col-4">
                                     <p class="text-bold mx-0 my-1 text-dark">Invoice</p>
-                                    <p class="text-xs mx-0 my-1">Date: slice date</p>
+                                    <p class="text-xs mx-0 my-1">Time: {{ formattedTime }}</p>
+                                    <p class="text-xs mx-0 my-1">Date: {{ formattedDate }}</p>
                                 </div>
                             </div>
                             <hr class="mx-0 my-2 p-0 bg-secondary" />
@@ -109,14 +145,17 @@ const addProductToSale = (id, image, name, price, unit) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr class="text-center">
-                                                <td> p name </td>
-                                                <td> p unit</td>
-                                                <td> p price</td>
+                                            <tr v-if="selectedProduct.length > 0"
+                                                v-for="(product, index) in selectedProduct" :key="index"
+                                                class="text-left">
+                                                <td> {{ product.name }} </td>
+                                                <td> {{ product.unit }}</td>
+                                                <td> {{ product.price }}</td>
                                                 <td>
-                                                    <button class="">-</button>
-                                                    <button class="">+</button>
-                                                    <button class="btn btn-danger btn-sm">Remove</button>
+                                                    <button @click="removeQTY(product.id)" class="">-</button>
+                                                    <button @click="addQTY(product.id)" class="">+</button>
+                                                    <button @click="removeProductFromSale(index)"
+                                                        class="btn btn-danger btn-sm">Remove</button>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -126,22 +165,24 @@ const addProductToSale = (id, image, name, price, unit) => {
                             <hr class="mx-0 my-2 p-0 bg-secondary" />
                             <div class="row">
                                 <div class="col-12">
-                                    <p class="text-bold text-xs my-1 text-dark">Total: <i
-                                            class="bi bi-currency-dollar"></i> calculateTotal()</p>
+                                    <p class="text-bold text-xs my-1 text-dark">Total:
+                                        <i class="bi bi-currency-dollar"></i> {{ calculateTotal() }}
+                                    </p>
                                     <p class="text-bold text-xs my-1 text-dark">VAT (vatRate%): <i
-                                            class="bi bi-currency-dollar"></i> vatAmount</p>
-                                    <p><button class="btn btn-info btn-sm my-1 bg-gradient-primary w-40">Apply
-                                            VAT</button></p>
-                                    <p><button class="btn btn-secondary btn-sm my-1 bg-gradient-primary w-40">Remove
-                                            VAT</button></p>
+                                            class="bi bi-currency-dollar"></i> {{ vatAmount }}</p>
+                                    <p class="d-flex align-items-center gap-2">
+                                        <button @click="applyVat()" class="btn btn-info btn-sm my-1 bg-gradient-primary w-40">Apply VAT</button>
+                                        <button @click="removeVat()" class="btn btn-secondary btn-sm my-1 bg-gradient-primary w-40">Remove
+                                            VAT</button>
+                                    </p>
 
                                     <p><span class="text-xxs">Discount Mode:</span></p>
-                                    <select>
-                                        <option value="false">Flat Discount</option>
-                                        <option value="true">Percentage Discount</option>
+                                    <select v-model="usePercentageDiscount">
+                                        <option :value="false">Flat Discount</option>
+                                        <option :value="true">Percentage Discount</option>
                                     </select>
                                     <p class="text-bold text-xs my-1 text-dark">Discount: <i
-                                            class="bi bi-currency-dollar"></i> discountAmount </p>
+                                            class="bi bi-currency-dollar"></i> {{ discountAmount }} </p>
                                     <div>
                                         <span class="text-xxs">Flat Discount:</span>
                                         <input type="number" class="form-control w-40" min="0" />

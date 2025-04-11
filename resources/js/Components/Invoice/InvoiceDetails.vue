@@ -12,20 +12,29 @@ const emit = defineEmits(['close-modal']);
 const closeModal = () => {
     emit('close-modal')
 }
-const now = new Date();
 
+const printInvoice = () => {
+    const printContent = document.querySelector('.modal-body').innerHTML;
+    const originalContent = document.body.innerHTML;
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+
+const now = new Date();
 const formattedDate = now.toLocaleDateString('en-US', {
-    weekday: 'short',
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric'
 });
-
 const formattedTime = now.toLocaleTimeString('en-US', {
+    weekday: 'short',
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
 });
+
 </script>
 
 <template>
@@ -98,7 +107,7 @@ const formattedTime = now.toLocaleTimeString('en-US', {
 
             <div class="modal-footer">
                 <button @click="closeModal" class="btn btn-secondary" style="margin-right: 5px;">Close</button>
-                <button class="btn btn-primary">Print</button>
+                <button @click="printInvoice" class="btn btn-primary">Print</button>
             </div>
         </div>
     </div>
