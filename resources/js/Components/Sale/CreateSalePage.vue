@@ -37,7 +37,9 @@ const discountAmount = ref(0);
 const usePercentageDiscount = ref(false);
 
 const selectedProduct = ref([]);
+
 const addProductToSale = (id, image, name, price, unit) => {
+    console.log('ok');
 
     const existingProduct = selectedProduct.value.find((product) => {
         return product.id === id;
@@ -184,7 +186,7 @@ const addProductToSale = (id, image, name, price, unit) => {
 
                             <template #item-action="{ id, image, name, price, unit }">
                                 <button :class="['btn btn-sm', unit > 0 ? 'btn-success' : 'btn-danger']"
-                                    :disabled="unit <= 0" @click="addProductToSale = { id, image, name, price, unit }">
+                                    :disabled="unit <= 0" @click="addProductToSale(id, image, name, price, unit)">
                                     {{ unit > 0 ? 'Add' : 'Out of Stock' }}
                                 </button>
                             </template>
