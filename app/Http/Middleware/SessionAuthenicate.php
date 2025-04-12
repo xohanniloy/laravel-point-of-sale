@@ -13,6 +13,7 @@ class SessionAuthenicate {
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle( Request $request, Closure $next ): Response {
+        
         $email = $request->session()->get( 'email', 'default' );
         $user_id = $request->session()->get( 'user_id', 'default' );
 

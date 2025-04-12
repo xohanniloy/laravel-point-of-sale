@@ -268,6 +268,11 @@ class UserController extends Controller {
 
     // Page Methode
     public function loginPage() {
+        // Check if user is already authenticated
+    if (session('user_id')) {
+        // Redirect to dashboard if already logged in
+        return redirect()->route('dashboard.page');
+    }
         return Inertia::render( 'LoginPage' );
     }
     public function registerPage() {
