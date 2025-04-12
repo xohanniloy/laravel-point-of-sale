@@ -47,7 +47,7 @@ import { Link } from '@inertiajs/vue3';
             <span class="side-bar-item-caption">Invoice</span>
             </Link>
 
-            <Link href="/ProfilePage" class="side-bar-item">
+            <Link href="/profile" class="side-bar-item">
             <span class="side-bar-item-icon"><i class="fa fa-user-circle text-green" /></span>
             <span class="side-bar-item-caption">Profile</span>
             </Link>

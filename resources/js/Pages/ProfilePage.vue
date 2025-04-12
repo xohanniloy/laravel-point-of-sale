@@ -1,11 +1,11 @@
 <script setup>
 import SideNavLayout from '../Layout/SideNavLayout.vue';
-import SummaryView from '../Components/Dashboard/SummaryView.vue';
+import ProfileView from '../Components/Profile/ProfileView.vue';
 </script>
 
 <template>
     <SideNavLayout>
-        <SummaryView />
+        <ProfileView />
     </SideNavLayout>
 </template>
 

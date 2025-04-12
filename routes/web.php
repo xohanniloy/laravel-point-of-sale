@@ -66,6 +66,9 @@ Route::middleware( [SessionAuthenicate::class] )->group( function () {
 
     //Reset Password
     Route::get( '/reset-password', [UserController::class, 'resetPasswordPage'] )->name( 'reset.password.page' );
+
+    Route::get('/profile', [UserController::class, 'profilePage'])->name('profile.page');
+    Route::post('/update-profile', [UserController::class, 'updateProfile'])->name('update.profile');
 } );
 
 //All PageRoute

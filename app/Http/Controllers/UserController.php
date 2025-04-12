@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
-use App\Models\User;
-use Inertia\Inertia;
 use App\Mail\OTPMail;
+use App\Models\Category;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
+use Inertia\Inertia;
 
 class UserController extends Controller {
     public function userRegistration( Request $request ) {
@@ -106,7 +110,28 @@ class UserController extends Controller {
 
     } //End Method
     public function dashboardPage( Request $request ) {
-        return Inertia::render( 'DashboardPage' );
+        $user_id = $request->header( 'id' );
+        $products = Product::where( 'user_id', $user_id )->count();
+        $categories = Category::where( 'user_id', $user_id )->count();
+        $customers = Customer::where( 'user_id', $user_id )->count();
+        $invoices = Invoice::where( 'user_id', $user_id )->count();
+        $total = Invoice::where( 'user_id', $user_id )->sum( 'total' );
+        $vat = Invoice::where( 'user_id', $user_id )->sum( 'vat' );
+        $payable = Invoice::where( 'user_id', $user_id )->sum( 'payable' );
+        $discount = Invoice::where( 'user_id', $user_id )->sum( 'discount' );
+        $data = [
+            'products'   => $products,
+            'categories' => $categories,
+            'customers'  => $customers,
+            'invoices'   => $invoices,
+            'total'      => round( $total ),
+            'vat'        => round( $vat ),
+            'payable'    => round( $payable ),
+            'discount'   => $discount,
+        ];
+        return Inertia::render( 'DashboardPage', [
+            'dashboard' => $data
+        ] );
     } //End Method
     public function userLogout( Request $request ) {
         // return response()->json( [
@@ -209,7 +234,7 @@ class UserController extends Controller {
                         'status'  => true,
                         'error'   => '',
                     ] );
-                }else {
+                } else {
                     return redirect( '/reset-password' )->with( [
                         'message' => 'OTP not verified',
                         'status'  => false,
@@ -257,5 +282,29 @@ class UserController extends Controller {
     public function verifyOtpPage() {
         return Inertia::render( 'VerifyOtpPage' );
     } //End Method
+
+    public function profilePage(Request $request) {
+        $user_id = $request->header( 'id' );
+        $user = User::where( 'id', $user_id )->first();
+        return Inertia::render( 'ProfilePage', [
+            'user' => $user
+        ] );
+    }
+
+    public function updateProfile(Request $request) {
+        $user_id = $request->header( 'id' );
+        $user = User::where( 'id', $user_id )->first();
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'phone' => 'required|string|max:255',
+            // Add more fields as needed, but DO NOT include 'phone'
+        ]);
+        $user->update($validated);
+        return redirect( '/profile' )->with( [
+            'message' => 'Profile updated successfully',
+            'status'  => true,
+            'error'   => '',
+        ]);
+    }
 
 }
