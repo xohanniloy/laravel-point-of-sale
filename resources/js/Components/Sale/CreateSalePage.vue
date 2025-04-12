@@ -8,53 +8,43 @@ const toaster = createToaster({
     position: "top-right",
     duration: 3000,
 });
-let page = usePage()
-const selectCustomer = ref(null);
+let page = usePage();
 
+// Start Customer------------
+const CustomerHeader = [
+    { text: "Customer", value: "name" },
+    { text: "Action", value: "action" },
+];
+const CustomerItem = ref(page.props.customers);
+const searchCustomerValue = ref();
+const searchCustomerField = ref();
+const selectCustomer = ref(null);
+const addCustomerToSale = (Customer) => {
+    selectCustomer.value = (Customer);
+}
+// Ended Customer------------
+
+// Start Product------------
 const ProductHeader = [
     { text: "Image", value: "image" },
     { text: "Name", value: "name" },
     { text: "Quantity", value: "unit" },
     { text: "Action", value: "action" },
 ];
-
-const CustomerHeader = [
-    { text: "Customer", value: "name" },
-    { text: "Action", value: "action" },
-];
-const CustomerItem = ref(page.props.customers);
 const ProductItem = ref(page.props.products);
-const searchCustomerValue = ref();
-const searchCustomerField = ref();
 const searchProductValue = ref();
 const searchProductField = ref();
-
-const vatRate = ref(0);
-const flatDiscount = ref(0);
-const discountPercentage = ref(0);
-const total = ref(0);
-const vatAmount = ref(0);
-const discountAmount = ref(0);
-const usePercentageDiscount = ref(false);
-
-
 const selectedProduct = ref([]);
-
 const addProductToSale = (id, image, name, price, unit) => {
-    console.log('ok');
+    const existingProduct = selectedProduct.value.find((product) => product.id === id);
 
-    const existingProduct = selectedProduct.value.find((product) => {
-        return product.id === id;
-    });
     if (existingProduct) {
-        console.log(existingProduct);
-
         if (existingProduct.existQTY > 0) {
             existingProduct.unit++;
             existingProduct.existQTY--;
             calculateTotal();
         } else {
-            toaster.error(`${name}Product out of stock`);
+            toaster.warning(`${name} out of stock`);
         }
     } else {
         if (unit > 0) {
@@ -73,25 +63,149 @@ const addProductToSale = (id, image, name, price, unit) => {
         }
     }
 }
-const removeQTY = (id) => {
-    console.log(id);
-}
+// Ended Product------------
+
+// Start Add and Remove QTY and Remove Product
 const addQTY = (id) => {
-    console.log(id);
+    const product = selectedProduct.value.find((product) => product.id === id);
+
+    if (!product) {
+        toaster.warning("Product not found");
+        return;
+    }
+
+    // Prevent adding quantity if out of stock
+    if (product.existQTY <= 0) {
+        toaster.warning(`${product.name} is out of stock`);
+        return;
+    }
+
+    product.unit++;
+    product.existQTY--;
+    calculateTotal();
+}
+const removeQTY = (id) => {
+    const product = selectedProduct.value.find((product) => product.id === id);
+
+    if (!product) {
+        toaster.warning("Product not found");
+        return;
+    }
+
+    // Prevent removing more than added
+    if (product.unit <= 1) {
+        toaster.warning(`${product.name} quantity is already at minimum`);
+        return;
+    }
+
+    product.unit--;
+    product.existQTY++;
+    calculateTotal();
 }
 const removeProductFromSale = (index) => {
-    console.log(index);
+    selectedProduct.value.splice(index, 1);
+    calculateTotal();
 }
-const calculateTotal = () => {
-    console.log('calculateTotal');
+// End Add and Remove QTY and Remove Product
 
+
+const total = ref(0);
+
+
+const calculateTotal = () => {
+    return selectedProduct.value.reduce((total, product) => {
+        return total + product.price * product.unit;
+    }, 0);
 }
+// Start Apply and Remove Vat
+const vatRate = ref(5);
+const vatAmount = ref(0);
 const applyVat = () => {
-    console.log('applyVat');
+    vatAmount.value = (calculateTotal() * vatRate.value) / 100;
+    calculateTotal();
 }
 const removeVat = () => {
-    console.log('removeVat');
+    vatAmount.value = 0;
+    vatRate.value = 0;
+    calculateTotal();
 }
+// End Apply and Remove Vat
+
+// start Apply and Remove Discount
+const usePercentageDiscount = ref(false);
+const flatDiscount = ref(0);
+const percentageDiscount = ref(0);
+const discountAmount = ref(0);
+const applyDiscount = () => {
+    if (usePercentageDiscount.value) {
+        discountAmount.value = (calculateTotal() * percentageDiscount.value) / 100;
+    } else {
+        discountAmount.value = flatDiscount.value;
+    }
+    calculatePayable();
+
+}
+const removeDiscount = () => {
+    discountAmount.value = 0;
+    percentageDiscount.value = 0;
+    flatDiscount.value = 0;
+    calculatePayable();
+}
+let payable = ref(0);
+const calculatePayable = () => {
+    const totalAmount = calculateTotal();
+    const discount = discountAmount.value;
+    const vat = vatAmount.value;
+    return payable.value = totalAmount + vat - discount;
+    // return payable;
+}
+// End Apply and Remove Discount
+
+const form = useForm({
+    customer_id: '',
+    products: '',
+    vat: '',
+    discount: '',
+    payable: calculateTotal(),
+    total: '',
+});
+
+const confirmSale = () => {
+    if(!selectCustomer.value){
+        toaster.warning('Please select a customer');
+        return;
+    }
+    if(selectedProduct.value.length === 0){
+        toaster.warning('Please select at least one product');
+        return;
+    }
+
+    form.customer_id = selectCustomer.value.id;
+    form.products = selectedProduct.value;
+    form.total = total.value
+    form.vat = vatAmount.value;
+    form.discount = discountAmount.value;
+    form.payable = payable.value;
+
+    const calculatedTotal = calculateTotal();
+    form.total = calculatedTotal;
+    form.payable = payable.value;
+
+    form.post('/create-invoice',{
+        onSuccess: ()=>{
+            if(page.props.flash.status === true){
+                toaster.success(page.props.flash?.message || 'Invoice created successfully');
+                setTimeout(() => {
+                    router.get('/invoice-page');
+                }, 500);
+            }
+            else{
+                toaster.error(page.props.flash?.message || "Invoice creation failed. Please check your credentials.");
+            }
+        }
+    });
+    
+};
 
 
 const now = new Date();
@@ -122,14 +236,24 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                             <div class="row">
                                 <div class="col-8">
                                     <span class="text-bold text-dark">BILLED TO</span>
-                                    <p class="text-xs mx-0 my-1">Name: <span>{{ selectedCustomer?.name }}</span></p>
-                                    <p class="text-xs mx-0 my-1">Email: <span>{{ selectedCustomer?.email }}</span></p>
-                                    <p class="text-xs mx-0 my-1">User ID: <span>{{ selectedCustomer?.id }}</span></p>
+                                    <template v-if="selectCustomer">
+                                        <p class="text-xs mx-0 my-1"><strong>Name:</strong> <span>{{
+                                            selectCustomer?.name }}</span></p>
+                                        <p class="text-xs mx-0 my-1"><strong>Email:</strong> <span>{{
+                                            selectCustomer?.email }}</span></p>
+                                        <p class="text-xs mx-0 my-1"><strong>User ID:</strong> <span>{{
+                                            selectCustomer?.id }}</span></p>
+                                    </template>
+                                    <template v-if="!selectCustomer">
+                                        <p class="text-xs mx-0 my-1"><strong>Name:</strong> <span>Your Name</span></p>
+                                        <p class="text-xs mx-0 my-1"><strong>Email:</strong> <span>Your Email</span></p>
+                                        <p class="text-xs mx-0 my-1"><strong>User ID:</strong> <span>Your ID</span></p>
+                                    </template>
                                 </div>
                                 <div class="col-4">
                                     <p class="text-bold mx-0 my-1 text-dark">Invoice</p>
-                                    <p class="text-xs mx-0 my-1">Time: {{ formattedTime }}</p>
-                                    <p class="text-xs mx-0 my-1">Date: {{ formattedDate }}</p>
+                                    <p class="text-xs mx-0 my-1"><strong>Time:</strong> {{ formattedTime }}</p>
+                                    <p class="text-xs mx-0 my-1"><strong>Date:</strong> {{ formattedDate }}</p>
                                 </div>
                             </div>
                             <hr class="mx-0 my-2 p-0 bg-secondary" />
@@ -140,6 +264,7 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                                             <tr class="text-xs">
                                                 <th>Name</th>
                                                 <th>Qty</th>
+                                                <th>Price</th>
                                                 <th>Total</th>
                                                 <th>Remove</th>
                                             </tr>
@@ -151,6 +276,7 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                                                 <td> {{ product.name }} </td>
                                                 <td> {{ product.unit }}</td>
                                                 <td> {{ product.price }}</td>
+                                                <td> {{ product.price * product.unit }}</td>
                                                 <td>
                                                     <button @click="removeQTY(product.id)" class="">-</button>
                                                     <button @click="addQTY(product.id)" class="">+</button>
@@ -166,13 +292,19 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                             <div class="row">
                                 <div class="col-12">
                                     <p class="text-bold text-xs my-1 text-dark">Total:
-                                        <i class="bi bi-currency-dollar"></i> {{ calculateTotal() }}
+                                        <i class="bi bi-currency-dollar"></i>{{ calculateTotal() }}
                                     </p>
-                                    <p class="text-bold text-xs my-1 text-dark">VAT (vatRate%): <i
-                                            class="bi bi-currency-dollar"></i> {{ vatAmount }}</p>
+                                    <!-- need input for Vat -->
+
+                                    <p class="text-bold text-xs my-1 text-dark">VAT ( {{ vatRate }}%): <i
+                                            class="bi bi-currency-dollar"></i>{{
+                                                vatAmount }}</p>
+                                    <input class="form-control w-40" type="number" v-model="vatRate">
                                     <p class="d-flex align-items-center gap-2">
-                                        <button @click="applyVat()" class="btn btn-info btn-sm my-1 bg-gradient-primary w-40">Apply VAT</button>
-                                        <button @click="removeVat()" class="btn btn-secondary btn-sm my-1 bg-gradient-primary w-40">Remove
+                                        <button @click="applyVat()"
+                                            class="btn btn-info btn-sm my-1 bg-gradient-primary w-40">Apply VAT</button>
+                                        <button @click="removeVat()"
+                                            class="btn btn-secondary btn-sm my-1 bg-gradient-primary w-40">Remove
                                             VAT</button>
                                     </p>
 
@@ -182,26 +314,50 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                                         <option :value="true">Percentage Discount</option>
                                     </select>
                                     <p class="text-bold text-xs my-1 text-dark">Discount: <i
-                                            class="bi bi-currency-dollar"></i> {{ discountAmount }} </p>
-                                    <div>
+                                            class="bi bi-currency-dollar"></i>{{ discountAmount }}
+                                    </p>
+                                    <div v-if="!usePercentageDiscount" class="mb-2">
                                         <span class="text-xxs">Flat Discount:</span>
-                                        <input type="number" class="form-control w-40" min="0" />
-                                        <p><button class="btn btn-warning btn-sm my-1 bg-gradient-primary w-40">Apply
-                                                Flat Discount</button></p>
+                                        <input v-model="flatDiscount" type="number" class="form-control w-40" min="0" />
+                                        <!-- <p>
+                                            <button @click="applyDiscount()"
+                                                class="btn btn-warning btn-sm my-1 bg-gradient-primary w-40">
+                                                Apply Flat Discount
+                                            </button>
+                                        </p> -->
                                     </div>
-                                    <div>
-                                        <span class="text-xxs">Discount (%):</span>
-                                        <input type="number" class="form-control w-40" min="0" max="100" step="0.25" />
-                                        <p><button class="btn btn-warning btn-sm my-1 bg-gradient-primary w-40">Apply
-                                                Percentage Discount</button></p>
+                                    <div v-else class="mb-2">
+                                        <span class="text-xxs">Discount ({{ percentageDiscount }}%):</span>
+                                        <input v-model="percentageDiscount" type="number" class="form-control w-40"
+                                            min="0" max="100" step="0.25" />
+                                        <!-- <p>
+                                            <button @click="applyDiscount()"
+                                                class="btn btn-warning btn-sm my-1 bg-gradient-primary w-40">
+                                                Apply Percentage Discount
+                                            </button>
+                                        </p> -->
                                     </div>
-                                    <p><button class="btn btn-secondary btn-sm my-1 bg-gradient-primary w-40">Remove
-                                            Discount</button></p>
+                                    <p class="d-flex align-items-center gap-2">
+                                        <button @click="applyDiscount()"
+                                            class="btn btn-warning btn-sm my-1 bg-gradient-primary w-40">
+                                            {{
+                                                usePercentageDiscount ?
+                                                    'Apply Percentage Discount' :
+                                                    'ApplyFlatDiscount'
+                                            }}
+                                        </button>
+                                        <button @click="removeDiscount()"
+                                            class="btn btn-secondary btn-sm my-1 bg-gradient-primary w-40">
+                                            Remove Discount
+                                        </button>
+                                    </p>
 
                                     <hr class="mx-0 my-2 p-0 bg-secondary" />
                                     <p class="text-bold text-xs my-1 text-dark">Payable: <i
-                                            class="bi bi-currency-dollar"></i> payable</p>
-                                    <p><button
+                                            class="bi bi-currency-dollar"></i>{{ calculatePayable()
+                                            }}</p>
+                                    <p>
+                                        <button @click="confirmSale()"
                                             class="btn btn-success btn-sm my-3 bg-gradient-primary w-40">Confirm</button>
                                     </p>
                                 </div>
@@ -246,7 +402,7 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                         <EasyDataTable buttons-pagination alternating :headers="CustomerHeader" :items="CustomerItem"
                             :rows-per-page="10" :search-field="searchCustomerField" :search-value="searchCustomerValue">
                             <template #item-action="{ id, name, email }">
-                                <button @click="selectCustomer = { id, name, email }"
+                                <button @click="addCustomerToSale({ id, name, email })"
                                     class="btn btn-success btn-sm">Add</button>
                             </template>
                         </EasyDataTable>

@@ -28,15 +28,25 @@ class InvoiceController extends Controller {
             foreach ( $products as $product ) {
                 $existingProduct = Product::where( 'id', $product['id'] )->first();
                 if ( !$existingProduct ) {
-                    return response()->json( [
-                        'status'  => "Failed",
+                    // return response()->json( [
+                    //     'status'  => "Failed",
+                    //     'message' => "Product with ID {$product['id']} not found",
+                    // ] );
+                    return redirect()->route( '/invoice.page' )->with( [
                         'message' => "Product with ID {$product['id']} not found",
+                        'status'  => false,
+                        'error'   => '',
                     ] );
                 }
                 if ( $existingProduct->unit < $product['unit'] ) {
-                    return response()->json( [
-                        'status'  => "Failed",
+                    // return response()->json( [
+                    //     'status'  => "Failed",
+                    //     'message' => "Only {$existingProduct->unit} units are available in stock for product with ID {$product['id']}, which is not enough to fulfill your request.",
+                    // ] );
+                    return redirect()->route( '/invoice.page' )->with( [
                         'message' => "Only {$existingProduct->unit} units are available in stock for product with ID {$product['id']}, which is not enough to fulfill your request.",
+                        'status'  => false,
+                        'error'   => '',
                     ] );
                 }
                 InvoiceProduct::create( [
@@ -51,15 +61,25 @@ class InvoiceController extends Controller {
                 ] );
             }
             DB::commit();
-            return response()->json( [
-                'status'  => "Success",
+            // return response()->json( [
+            //     'status'  => "Success",
+            //     'message' => "Invoice created successfully",
+            // ] );
+            return redirect()->route( 'invoice.page' )->with( [
                 'message' => "Invoice created successfully",
+                'status'  => true,
+                'error'   => '',
             ] );
         } catch ( Exception $e ) {
             DB::rollBack();
-            return response()->json( [
-                'status'  => "Failed",
+            // return response()->json( [
+            //     'status'  => "Failed",
+            //     'message' => "Failed to create invoice: " . $e->getMessage(),
+            // ] );
+            return redirect()->route( 'invoice.page' )->with( [
                 'message' => "Failed to create invoice: " . $e->getMessage(),
+                'status'  => false,
+                'error'   => '',
             ] );
         }
     } //End Method
@@ -88,24 +108,39 @@ class InvoiceController extends Controller {
             $user_id = $request->header( 'id' );
             $invoiceProduct = InvoiceProduct::where( 'invoice_id', $id )->where( 'user_id', $user_id )->first();
             if ( !$invoiceProduct ) {
-                return response()->json( [
-                    'status'  => "Failed",
+                // return response()->json( [
+                //     'status'  => "Failed",
+                //     'message' => "Invoice not found",
+                // ] );
+                return redirect()->route( 'invoice.page' )->with( [
                     'message' => "Invoice not found",
+                    'status'  => false,
+                    'error'   => '',
                 ] );
             }
             InvoiceProduct::where( 'invoice_id', $id )->where( 'user_id', $user_id )->delete();
             Invoice::where( 'id', $id )->where( 'user_id', $user_id )->delete();
 
             DB::commit();
-            return response()->json( [
-                'status'  => "Success",
+            // return response()->json( [
+            //     'status'  => "Success",
+            //     'message' => "Invoice deleted successfully",
+            // ] );
+            return redirect()->route( 'invoice.page' )->with( [
                 'message' => "Invoice deleted successfully",
+                'status'  => true,
+                'error'   => '',
             ] );
         } catch ( Exception $e ) {
             DB::rollBack();
-            return response()->json( [
-                'status'  => "Failed",
+            // return response()->json( [
+            //     'status'  => "Failed",
+            //     'message' => "Failed to delete invoice: " . $e->getMessage(),
+            // ] );
+            return redirect()->route( 'invoice.page' )->with( [
                 'message' => "Failed to delete invoice: " . $e->getMessage(),
+                'status'  => false,
+                'error'   => '',
             ] );
         }
     }

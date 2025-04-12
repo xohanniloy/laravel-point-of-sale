@@ -14,7 +14,7 @@ import { Link } from '@inertiajs/vue3';
         </nav>
         <div id="sideNav" class="side-nav-open">
             <div class="side-nav-top text-center">
-                <img alt="" class="side-nav-logo" src="../Assets/img/logo.svg" />
+                <img alt="" class="side-nav-logo" src="../Assets/img/logo.png" />
             </div>
 
             <Link href="/dashboard" class="side-bar-item">

@@ -37,7 +37,7 @@ const DeleteClick = (id) => {
     let text = "Do you went to delete"
     if (confirm(text) === true) {
         router.get(`/delete-invoice/${id}`);
-        toaster.success(page.props.flash?.message || "Product Deleted successfully");
+        toaster.success(page.props.flash?.message || "Invoice Deleted successfully");
     } else {
         text = "you canceled!";
     }

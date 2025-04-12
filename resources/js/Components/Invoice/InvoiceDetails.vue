@@ -5,9 +5,6 @@ const props = defineProps({
     customer: Object
 });
 
-console.log(props.customer);
-
-
 const emit = defineEmits(['close-modal']);
 const closeModal = () => {
     emit('close-modal')
@@ -60,7 +57,7 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                         </div>
                         <!-- Invoice Info Section -->
                         <div class="col-4 text-right">
-                            <img class="w-40" src="../../Assets/img/logo.svg" alt="Company Logo">
+                            <img class="w-40" src="../../Assets/img/logo.png" alt="Company Logo">
                             <!-- <p class="mb-1"><strong>Invoice</strong></p> -->
                             <p class="mb-1">Time: {{ formattedTime }}</p>
                             <p class="mb-1">Date: {{ formattedDate }}</p>
@@ -98,7 +95,7 @@ const formattedTime = now.toLocaleTimeString('en-US', {
                         <div class="col-12">
                             <p><strong>Total:</strong> {{ customer.total }}</p>
                             <p><strong>Payable:</strong> {{ customer.payable }}</p>
-                            <p><strong>VAT ({{ customer.vat }}%):</strong> {{ customer.vat }}</p>
+                            <p><strong>VAT:</strong> {{ customer.vat }}</p>
                             <p><strong>Discount:</strong> {{ customer.discount }}</p>
                         </div>
                     </div>
