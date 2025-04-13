@@ -116,6 +116,8 @@ const calculateTotal = () => {
     return selectedProduct.value.reduce((total, product) => {
         return total + product.price * product.unit;
     }, 0);
+    
+    
 }
 // Start Apply and Remove Vat
 const vatRate = ref(5);
